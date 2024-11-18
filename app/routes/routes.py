@@ -102,6 +102,26 @@ def login():
     token = generate_jwt(user['_id'])
     return jsonify({'message': 'Login successful', 'token': token}), 200
 
+# Route to get user information (protected route)
+@bp.route('/getUser', methods=['GET'])
+@jwt_required
+def get_user():
+    try:
+        # Query the database for the user by user_id
+        user = current_app.db.users.find_one({'_id': ObjectId(request.user_id)})
+        
+        # If user is not found, return an error response
+        if not user:
+            return jsonify({'error': 'User not found'}), 404
+        
+        # Convert ObjectId to string and exclude sensitive data (like password)
+        user['_id'] = str(user['_id'])
+        user.pop('password', None)  # Remove the password field
+        
+        return jsonify({'user': user}), 200
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
+
 # Route to get all tasks (protected route)
 @bp.route('/tasks', methods=['GET'])
 @jwt_required
